@@ -7,7 +7,7 @@ const donationSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-
+        postType: String,
         type: String,
         title: String,
         description: String,
