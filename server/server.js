@@ -23,13 +23,18 @@ if (!uri) {
 
 mongoose
   .connect(uri, { serverSelectionTimeoutMS: 30000 })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("Unable to connect to database:", err.message));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ Unable to connect to database:", err.message));
 
 // --- Routes ---
+// Donations
 import donationRoutes from "./routes/donation.routes.js";
 app.use("/api/donations", donationRoutes);
 
+// ✅ Users
+import userRoutes from "./routes/user.routes.js";
+app.use("/api/users", userRoutes);
+
 // --- Start server ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(` Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server started on port ${PORT}`));
