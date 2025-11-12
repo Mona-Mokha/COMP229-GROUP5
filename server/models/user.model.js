@@ -6,11 +6,7 @@ const userSchema = new mongoose.Schema(
     email: String,
     passwordHash: String,
 
-    role: {
-      type: String,
-      enum: ["donor", "receiver", "admin"],
-      required: true,
-    },
+    role: { type: String, enum: ["User", "Admin"], default: "User" },
 
     phone: String,
     address: String,
@@ -18,8 +14,8 @@ const userSchema = new mongoose.Schema(
     province: String,
     postal_code: String,
   },
-  { 
-    timestamps: { createdAt: "created", updatedAt: "updated" } 
+  {
+    timestamps: { createdAt: "created", updatedAt: "updated" }
   }
 );
 
