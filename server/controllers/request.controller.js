@@ -1,104 +1,195 @@
-const Request = require('../models/Request');
-
-exports.createRequest = async (req, res) => {
+import RequestModel from "../models/request.model.js";
+import DonationModel from "../models/donation.model.js";
+import { createNotification } from "./notification.controller.js";
+ 
+// CREATE REQUEST
+export const createRequest = async (req, res) => {
   try {
-    const { donationId } = req.body;
-    const receiverId = req.user._id;
-
-    const existingRequest = await Request.findOne({ donationId, receiverId });
-    if (existingRequest) {
-      return res.status(400).json({ message: 'You already requested this item.' });
+    const {donationId} = req.body;
+ 
+    const donation = await DonationModel.findById(donationId);
+    if (!donation) {
+      return res.status(400).json({ message: "Donation not found." });
     }
-
-    const request = await Request.create({ donationId, receiverId });
-    res.status(201).json({ message: 'Request created successfully', request });
+ 
+    // Prevent users from requesting their own donations
+    if (donation.donorId.toString() === req.user._id.toString()) {
+      return res.status(403).json({ message: "You cannot request your own donation." });
+    }
+ 
+    // donations approved by admin can be requested
+    if (donation.status !== "Approved") {
+      return res.status(400).json({ message: "Donation is not available for request." });
+    }
+ 
+    const blockedRequest = await RequestModel.findOne({
+      donationId,
+      status: { $in: ["Approved", "Scheduled", "Completed"] }
+    });
+ 
+    if (blockedRequest) {
+      return res.status(400).json({ message: "This donation has already been approved or scheduled." });
+    }
+ 
+    const request = await RequestModel.create({
+      donationId,
+      receiverId: req.user._id,
+      status: "Requested",
+    });
+ 
+    // Send notification to donor
+    await createNotification(
+      donation.donorId,
+      request._id,
+      "info",
+      `New request for your donation "${donation.title}"`
+    );
+ 
+    res.status(200).json({ message: "Request created successfully", request });
+ 
   } catch (error) {
-    res.status(500).json({ message: 'Error creating request', error: error.message });
+    console.error("Error creating request:", error);
+    res.status(500).json({ message: error.message });
   }
 };
-
-exports.getAllRequests = async (req, res) => {
+ 
+// GET REQUESTS FOR MY DONATIONS
+export const getRequestsForMyDonations = async (req, res) => {
   try {
-    let filter = {};
-
-    if (req.user.role === 'donor') {
-      filter = { donorId: req.user._id };
-    }
-
-    const requests = await Request.find(filter)
-      .populate('receiverId', 'name email')
-      .populate('donationId', 'title category')
+    const donationIds = await DonationModel.distinct("_id", { donorId: req.user._id });
+ 
+    const requests = await RequestModel.find({ donationId: { $in: donationIds } })
+      .populate("donationId", "title donorId")
+      .populate("receiverId", "name")
       .sort({ createdAt: -1 });
-
-    res.status(200).json(requests);
+ 
+    res.status(200).json({ message: "Requests for your donations fetched successfully", requests });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching requests', error: error.message });
+    console.error("Error fetching requests:", error);
+    res.status(500).json({ message: error.message });
   }
 };
-
-exports.getRequestById = async (req, res) => {
+ 
+ 
+// GET REQUESTS BY USER
+export const getRequestsByUser = async (req, res) => {
   try {
-    const request = await Request.findById(req.params.id)
-      .populate('receiverId', 'name email')
-      .populate('donationId', 'title category donorId');
-
-    if (!request) return res.status(404).json({ message: 'Request not found' });
-
-    const isOwner =
-      request.receiverId._id.toString() === req.user._id.toString() ||
-      request.donationId.donorId.toString() === req.user._id.toString() ||
-      req.user.role === 'admin';
-
-    if (!isOwner) {
-      return res.status(403).json({ message: 'Access denied' });
+    const requests = await RequestModel.find({ receiverId: req.user._id })
+      .populate("donationId", "title donorId")
+      .populate("receiverId", "name")
+      .sort({ createdAt: -1 });
+ 
+    res.status(200).json({ message: "Your requests fetched successfully", requests });
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+ 
+// GET SINGLE REQUEST
+export const getRequestById = async (req, res) => {
+  try {
+    const request = await RequestModel.findById(req.params.id)
+      .populate("donationId", "title donorId")
+      .populate("receiverId", "name");
+ 
+    if (!request) return res.status(404).json({ message: "Request not found." });
+ 
+    const isDonor = request.donationId.donorId.toString() === req.user._id.toString();
+    const isReceiver = request.receiverId._id.toString() === req.user._id.toString();
+ 
+    if (!isDonor && !isReceiver) {
+      return res.status(403).json({ message: "Access denied!" });
     }
-
+ 
     res.status(200).json(request);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching request', error: error.message });
+    console.error("Error fetching request:", error);
+    res.status(500).json({ message: error.message });
   }
 };
-
-exports.updateRequest = async (req, res) => {
+ 
+ 
+// UPDATE REQUEST
+export const updateRequestById = async (req, res) => {
   try {
-    const { status, selectedSlot } = req.body;
-    const request = await Request.findById(req.params.id).populate('donationId', 'donorId');
-
-    if (!request) return res.status(404).json({ message: 'Request not found' });
-
-    if (req.user.role === 'receiver' && request.receiverId.toString() === req.user._id.toString()) {
-      request.selectedSlot = selectedSlot || request.selectedSlot;
-    } else if (req.user.role === 'donor' && request.donationId.donorId.toString() === req.user._id.toString()) {
-      if (status) request.status = status;
-    } else if (req.user.role === 'admin') {
-      if (status) request.status = status;
-      if (selectedSlot) request.selectedSlot = selectedSlot;
-    } else {
-      return res.status(403).json({ message: 'Not authorized to update this request' });
+    const request = await RequestModel.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: "Request not found." });
+ 
+    const donation = await DonationModel.findById(request.donationId);
+    if (!donation) return res.status(404).json({ message: "Donation not found." });
+ 
+    const isDonor = donation.donorId.toString() === req.user._id.toString();
+    const isReceiver = request.receiverId.toString() === req.user._id.toString();
+ 
+    if (!isDonor && !isReceiver) {
+      return res.status(403).json({ message: "Access denied!" });
     }
-
-    await request.save();
-    res.status(200).json({ message: 'Request updated successfully', request });
+ 
+    const updates = {};
+ 
+    if (isDonor) {
+      // Donor request status and slots
+      if (req.body.status && ["Approved", "Rejected", "Completed"].includes(req.body.status)) {
+        updates.status = req.body.status;
+ 
+        // Send notification to receiver
+        await createNotification(
+          request.receiverId,
+          request._id,
+          "info",
+          `Your request for "${donation.title}" has been ${updates.status}`
+        );
+      }
+      if (req.body.slots) {
+        updates.slots = req.body.slots;
+      }
+    }
+ 
+    if (isReceiver) {
+      // Receiver select a slot
+      if (req.body.selectedSlot) {
+        updates.selectedSlot = req.body.selectedSlot;
+        updates.status = "Scheduled";
+ 
+        // Notify donor
+        await createNotification(
+          donation.donorId,
+          request._id,
+          "info",
+          `User selected a slot for "${donation.title}"`
+        );
+      }
+    }
+ 
+    const updatedRequest = await RequestModel.findByIdAndUpdate(req.params.id, updates, { new: true });
+ 
+    res.status(200).json({ message: "Request updated successfully", request: updatedRequest });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating request', error: error.message });
+    console.error("Error updating request:", error);
+    res.status(500).json({ message: error.message });
   }
 };
-
-exports.deleteRequest = async (req, res) => {
+ 
+ 
+// DELETE REQUEST
+export const deleteRequestById = async (req, res) => {
   try {
-    const request = await Request.findById(req.params.id);
-    if (!request) return res.status(404).json({ message: 'Request not found' });
-
-    const isAuthorized =
-      req.user.role === 'admin' ||
-      request.receiverId.toString() === req.user._id.toString();
-
-    if (!isAuthorized)
-      return res.status(403).json({ message: 'Not authorized to delete this request' });
-
-    await request.deleteOne();
-    res.status(200).json({ message: 'Request deleted successfully' });
+    const request = await RequestModel.findById(req.params.id);
+ 
+    if (!request) return res.status(404).json({ message: "Request not found." });
+ 
+    // Only receiver can delete the request
+    const isReceiver = request.receiverId.toString() === req.user._id.toString();
+    if (!isReceiver) {
+      return res.status(403).json({ message: "Access denied!" });
+    }
+ 
+    await RequestModel.findByIdAndDelete(req.params.id);
+ 
+    res.status(200).json({ message: "Request deleted successfully." });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting request', error: error.message });
+    console.error("Error deleting request:", error);
+    res.status(500).json({ message: error.message });
   }
 };
