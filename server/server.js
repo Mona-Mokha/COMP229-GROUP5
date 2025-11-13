@@ -1,40 +1,38 @@
-// server/server.js
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-import cors from "cors";
+import dotenv from 'dotenv';
+import path from "path";
+import userRoutes from "./routes/user.routes.js";
+import donationRoutes from "./routes/donation.routes.js";
+import requestRoutes from "./routes/request.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
-// load /server/.env
-dotenv.config();
+//The client does NOT access .env directly
+//Instead, the server loads .env and uses the variables internally
+dotenv.config({ path: path.resolve('../server/.env') });
+
+//connect to mongo db
+mongoose.connect(process.env.MONGO_URI);
+const connection = mongoose.connection;
+connection.on('error', console.error.bind(console, "Unable to connect to database: "));
+connection.once('open', () => { console.log('Connected to database!'); });
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(express.json()); 
 
-// health check
-app.get("/", (_req, res) => res.json({ ok: true, service: "WearShare API" }));
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to application." });
+});
 
-// --- DB connect ---
-const uri = process.env.MONGO_URI;
-if (!uri) {
-  console.error("Missing MONGO_URI in /server/.env");
-  process.exit(1);
-}
+app.use("/user", userRoutes);
+app.use("/donation", donationRoutes);
+app.use("/request", requestRoutes);
+app.use("/notification", notificationRoutes);
 
-mongoose
-  .connect(uri, { serverSelectionTimeoutMS: 30000 })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ Unable to connect to database:", err.message));
 
-// --- Routes ---
-// Donations
-import donationRoutes from "./routes/donation.routes.js";
-app.use("/api/donations", donationRoutes);
-
-// ✅ Users
-import userRoutes from "./routes/user.routes.js";
-app.use("/api/users", userRoutes);
-
-// --- Start server ---
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server started on port ${PORT}`));
+app.listen(5000, (err) => {
+  if (err) {
+    console.log(err);
+  }
+  console.info("Server started on port %s.", 5000);
+});
