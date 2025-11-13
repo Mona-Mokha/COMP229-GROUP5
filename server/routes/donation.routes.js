@@ -1,23 +1,25 @@
-// server/routes/donation.routes.js
-import { Router } from "express";
+import express from "express";
 import {
+  getAllDonationsPublic,
+  getAllDonationsUser,
   createDonation,
-  getAllDonations,
   getDonationById,
-  updateDonation,
-  deleteDonation,
-  setDonationStatus,
+  updateDonationById,
+  deleteDonationById
 } from "../controllers/donation.controller.js";
+import authMiddleware from '../middleware/auth.js'; 
 
-// import { auth, permit } from "../middleware/auth.js";
+const router = express.Router();
 
-const router = Router();
+// Public Routes
+router.get("/", getAllDonationsPublic);
 
-router.get("/", getAllDonations);
-router.get("/:id", getDonationById);
-router.post("/", /* auth, permit("donor","admin"), */ createDonation);
-router.put("/:id", /* auth, */ updateDonation);
-router.delete("/:id", /* auth, */ deleteDonation);
-router.patch("/:id/status", /* auth, permit("admin"), */ setDonationStatus);
+// Protected Routes
+router.get("/user", authMiddleware, getAllDonationsUser);
+router.post("/create", authMiddleware, createDonation);
+router.get("/:id", authMiddleware, getDonationById);
+router.put("/:id", authMiddleware, updateDonationById);
+router.delete("/:id", authMiddleware, deleteDonationById);
+
 
 export default router;
