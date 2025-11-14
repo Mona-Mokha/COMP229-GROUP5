@@ -8,18 +8,27 @@ export const getAllDonationsPublic = async (req, res) => {
       .populate("donorId", "name city province")
       .sort({ created: -1 });
 
-    res.status(200).json({ message: "Donations fetched successfully", donations: {
-        id: donations._id,
-        type: donations.type,
-        title: donations.title,
-        description: donations.description,
-        images: donations.images,
-        category: donations.category,
-        size: donations.size,
-        condition: donations.condition,
-        preference: donations.preference,
-        status: donations.status,
-      } });
+    const response = donations.map(donation => ({
+      id: donation._id,
+      donor: donation.donorId
+        ? {
+          name: donation.donorId.name,
+          city: donation.donorId.city,
+          province: donation.donorId.province,
+        }
+        : null,
+      type: donation.type,
+      title: donation.title,
+      description: donation.description,
+      images: donation.images,
+      category: donation.category,
+      size: donation.size,
+      condition: donation.condition,
+      preference: donation.preference,
+      status: donation.status,
+    }));
+
+    res.status(200).json({ message: "Donations fetched successfully", donation: response });
   } catch (error) {
     console.error("Error fetching donations:", error);
     res.status(500).json({ message: error.message });
@@ -48,21 +57,32 @@ export const getAllDonationsUser = async (req, res) => {
     }
 
     const donations = await DonationModel.find(filter)
-      .populate()
+      .populate("donorId", "name city province")
       .sort({ created: -1 });
 
-    res.status(200).json({ message: "Donations fetched successfully", donations: {
-        id: donations._id,
-        type: donations.type,
-        title: donations.title,
-        description: donations.description,
-        images: donations.images,
-        category: donations.category,
-        size: donations.size,
-        condition: donations.condition,
-        preference: donations.preference,
-        status: donations.status,
-      } });
+       const response = donations.map(donation => ({
+      id: donation._id,
+      donor: donation.donorId
+        ? {
+            name: donation.donorId.name,
+            city: donation.donorId.city,
+            province: donation.donorId.province,
+          }
+        : null,
+      type: donation.type,
+      title: donation.title,
+      description: donation.description,
+      images: donation.images,
+      category: donation.category,
+      size: donation.size,
+      condition: donation.condition,
+      preference: donation.preference,
+      status: donation.status,
+    }));
+
+
+    res.status(200).json({ message: "Donations fetched successfully", donations: response });
+
   } catch (error) {
     console.error("Error fetching donations:", error);
     res.status(500).json({ message: error.message });
@@ -96,7 +116,7 @@ export const createDonation = async (req, res) => {
 
     res.status(200).json({
       message: "Donation created successfully", donation: {
-        id: donation._id,
+        donorId: donation._id,
         type: donation.type,
         title: donation.title,
         description: donation.description,
@@ -115,37 +135,88 @@ export const createDonation = async (req, res) => {
 };
 
 
+// PUBLIC: GET DONATION BY ID (only if approved)
+export const getDonationByIdPublic = async (req, res) => {
+  try {
+    const donation = await DonationModel.findById(req.params.id)
+      .populate("donorId", "name city province")
+      .populate("reviewedBy", "name");
+
+    if (!donation) return res.status(404).json({ message: "Donation not found" });
+
+    // Only allow public to view approved donations
+    if (donation.status !== "Approved") {
+      return res.status(403).json({ message: "Access denied! Donation not approved." });
+    }
+
+    const response = {
+      id: donation._id,
+      donor: donation.donorId
+        ? {
+            name: donation.donorId.name,
+            city: donation.donorId.city,
+            province: donation.donorId.province,
+          }
+        : null,
+      type: donation.type,
+      title: donation.title,
+      description: donation.description,
+      images: donation.images,
+      category: donation.category,
+      size: donation.size,
+      condition: donation.condition,
+      preference: donation.preference,
+      status: donation.status,
+    };
+
+    res.status(200).json({ message: "Donation fetched successfully", donation: response });
+  } catch (error) {
+    console.error("Error fetching donation:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 // GET DONATION BY ID
 export const getDonationById = async (req, res) => {
   try {
     const donation = await DonationModel.findById(req.params.id)
-      .populate("donorId", "name")
+      .populate("donorId", "name city province")
       .populate("reviewedBy", "name");
 
     if (!donation) {
       return res.status(404).json({ message: "Donation not found" });
     }
 
-    // Access control
     const isDonor = donation.donorId._id.toString() === req.user._id.toString();
     const isAdmin = req.user.role === "Admin";
+
+    // Only donor can view their pending donation; others see only approved
     if (!isAdmin && !isDonor && donation.status !== "Approved") {
       return res.status(403).json({ message: "Access denied!" });
     }
 
-    res.status(200).json({donation: {
-        id: donation._id,
-        type: donation.type,
-        title: donation.title,
-        description: donation.description,
-        images: donation.images,
-        category: donation.category,
-        size: donation.size,
-        condition: donation.condition,
-        preference: donation.preference,
-        status: donation.status,
-      }});
+    const response = {
+      id: donation._id,
+      donor: donation.donorId
+        ? {
+          name: donation.donorId.name,
+          city: donation.donorId.city,
+          province: donation.donorId.province,
+        }
+        : null,
+      type: donation.type,
+      title: donation.title,
+      description: donation.description,
+      images: donation.images,
+      category: donation.category,
+      size: donation.size,
+      condition: donation.condition,
+      preference: donation.preference,
+      status: donation.status,
+    };
 
+    res.status(200).json({ message: "Donation fetched successfully", donation: response });
   } catch (error) {
     console.error("Error fetching donation:", error);
     res.status(500).json({ message: error.message });
