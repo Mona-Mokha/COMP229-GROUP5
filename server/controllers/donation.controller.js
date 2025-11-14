@@ -5,10 +5,21 @@ import DonationModel from "../models/donation.model.js";
 export const getAllDonationsPublic = async (req, res) => {
   try {
     const donations = await DonationModel.find({ status: "Approved" })
-      .populate("donorId", "name")
+      .populate("donorId", "name city province")
       .sort({ created: -1 });
 
-    res.status(200).json({ message: "Donations fetched successfully", donations });
+    res.status(200).json({ message: "Donations fetched successfully", donations: {
+        id: donations._id,
+        type: donations.type,
+        title: donations.title,
+        description: donations.description,
+        images: donations.images,
+        category: donations.category,
+        size: donations.size,
+        condition: donations.condition,
+        preference: donations.preference,
+        status: donations.status,
+      } });
   } catch (error) {
     console.error("Error fetching donations:", error);
     res.status(500).json({ message: error.message });
@@ -37,10 +48,21 @@ export const getAllDonationsUser = async (req, res) => {
     }
 
     const donations = await DonationModel.find(filter)
-      .populate("donorId", "name")
+      .populate()
       .sort({ created: -1 });
 
-    res.status(200).json({ message: "Donations fetched successfully", donations });
+    res.status(200).json({ message: "Donations fetched successfully", donations: {
+        id: donations._id,
+        type: donations.type,
+        title: donations.title,
+        description: donations.description,
+        images: donations.images,
+        category: donations.category,
+        size: donations.size,
+        condition: donations.condition,
+        preference: donations.preference,
+        status: donations.status,
+      } });
   } catch (error) {
     console.error("Error fetching donations:", error);
     res.status(500).json({ message: error.message });
@@ -72,7 +94,20 @@ export const createDonation = async (req, res) => {
       reviewedBy: null,
     });
 
-    res.status(200).json({ message: "Donation created successfully", donation });
+    res.status(200).json({
+      message: "Donation created successfully", donation: {
+        id: donation._id,
+        type: donation.type,
+        title: donation.title,
+        description: donation.description,
+        images: donation.images,
+        category: donation.category,
+        size: donation.size,
+        condition: donation.condition,
+        preference: donation.preference,
+        status: donation.status,
+      }
+    });
   } catch (error) {
     console.error("Error creating donation:", error);
     res.status(500).json({ message: error.message });
@@ -98,7 +133,18 @@ export const getDonationById = async (req, res) => {
       return res.status(403).json({ message: "Access denied!" });
     }
 
-    res.status(200).json(donation);
+    res.status(200).json({donation: {
+        id: donation._id,
+        type: donation.type,
+        title: donation.title,
+        description: donation.description,
+        images: donation.images,
+        category: donation.category,
+        size: donation.size,
+        condition: donation.condition,
+        preference: donation.preference,
+        status: donation.status,
+      }});
 
   } catch (error) {
     console.error("Error fetching donation:", error);
