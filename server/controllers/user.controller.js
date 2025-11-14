@@ -161,7 +161,7 @@ export const updateUserById = async (req, res) => {
       updates.role = req.body.role;
     }
 
-    const updatedUser = await UserModel.findByIdAndUpdate(userId, updates, { new: true }).select("-password");
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, updates, { new: true }).select("-passwordHash");
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
