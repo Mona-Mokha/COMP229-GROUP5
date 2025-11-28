@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from "path";
 import userRoutes from "./routes/user.routes.js";
@@ -24,11 +25,12 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to application." });
 });
 
-app.use("/user", userRoutes);
-app.use("/donation", donationRoutes);
-app.use("/request", requestRoutes);
-app.use("/notification", notificationRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/donation", donationRoutes);
+app.use("/api/request", requestRoutes);
+app.use("/api/notification", notificationRoutes);
 
+app.use(morgan('dev'));
 
 app.listen(5000, (err) => {
   if (err) {

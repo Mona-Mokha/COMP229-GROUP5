@@ -23,14 +23,18 @@ export const registerUser = async (req, res) => {
       city,
       province,
       postal_code,
+      role: role || "User",
     });
+
+    const token = generateToken(user);
 
     res.status(200).json({
       message: "User registered successfully", user: {
         id: user._id,
         name: user.name,
-        email: user.email
-      }
+        email: user.email,
+        role: user.role
+      }, token
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

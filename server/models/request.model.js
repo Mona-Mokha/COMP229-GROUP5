@@ -22,14 +22,12 @@ const requestSchema = new mongoose.Schema(
         slots: [
             {
                 date: Date,
-                startTime: String,
-                endTime: String,
+                timeSlot: String
             }
         ],
         selectedSlot: {
             date: Date,
-            startTime: String,
-            endTime: String,
+            timeSlot: String
         },
     },
     {

@@ -8,7 +8,6 @@ const donationSchema = new mongoose.Schema(
             required: true,
         },
 
-        type: String,
         title: String,
         description: String,
         images: [String],

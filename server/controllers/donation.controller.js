@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import DonationModel from "../models/donation.model.js";
 
 
@@ -60,14 +62,14 @@ export const getAllDonationsUser = async (req, res) => {
       .populate("donorId", "name city province")
       .sort({ created: -1 });
 
-       const response = donations.map(donation => ({
+    const response = donations.map(donation => ({
       id: donation._id,
       donor: donation.donorId
         ? {
-            name: donation.donorId.name,
-            city: donation.donorId.city,
-            province: donation.donorId.province,
-          }
+          name: donation.donorId.name,
+          city: donation.donorId.city,
+          province: donation.donorId.province,
+        }
         : null,
       type: donation.type,
       title: donation.title,
@@ -98,14 +100,15 @@ export const createDonation = async (req, res) => {
       return res.status(401).json({ message: "You must login or register to create a donation." });
     }
 
-    const { type, title, description, images, category, size, condition, preference } = req.body;
+    const { title, description, category, size, condition, preference } = req.body;
+
+    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
     const donation = await DonationModel.create({
       donorId: req.user._id,
-      type,
       title,
       description,
-      images: images || [],
+      images,
       category,
       size,
       condition,
@@ -117,7 +120,6 @@ export const createDonation = async (req, res) => {
     res.status(200).json({
       message: "Donation created successfully", donation: {
         donorId: donation._id,
-        type: donation.type,
         title: donation.title,
         description: donation.description,
         images: donation.images,
@@ -153,10 +155,10 @@ export const getDonationByIdPublic = async (req, res) => {
       id: donation._id,
       donor: donation.donorId
         ? {
-            name: donation.donorId.name,
-            city: donation.donorId.city,
-            province: donation.donorId.province,
-          }
+          name: donation.donorId.name,
+          city: donation.donorId.city,
+          province: donation.donorId.province,
+        }
         : null,
       type: donation.type,
       title: donation.title,
@@ -245,12 +247,17 @@ export const updateDonationById = async (req, res) => {
     // Donor can update only their own fields
     if (isDonor) {
 
+      const existingImages = JSON.parse(req.body.existingImages || "[]");
+      const newImages = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+      const finalImages = [...existingImages, ...newImages];
+
       const donorFields = ['title', 'description', 'images', 'category', 'size', 'condition', 'preference'];
       donorFields.forEach(field => {
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field];
         }
       });
+      updates.images = finalImages; 
     }
 
     if (isAdmin) { // Admin can only update status and reviewedBy
@@ -282,6 +289,22 @@ export const deleteDonationById = async (req, res) => {
     if (!isDonor) {
       return res.status(403).json({ message: "Access denied!" });
     }
+
+    // delete images from /uploads folder
+    donation.images.forEach(img => {
+      if (donation.images && donation.images.length > 0) {
+        const fileName = img.replace("/uploads/", "").replace("uploads/", "");
+        const filePath = path.join(process.cwd(), "uploads", fileName);
+
+        fs.unlink(filePath, err => {
+          if (err) {
+            console.error("Error deleting image:", err);
+          } else {
+            console.log("Deleted image:", filePath);
+          }
+        });
+      }
+    });
 
     await DonationModel.findByIdAndDelete(donationId);
 

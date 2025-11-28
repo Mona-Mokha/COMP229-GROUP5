@@ -22,6 +22,12 @@ export const createRequest = async (req, res) => {
       return res.status(400).json({ message: "Donation is not available for request." });
     }
 
+    // Check for existing requests
+    const existingRequest = await RequestModel.findOne({ donationId, receiverId: req.user._id });
+    if (existingRequest) {
+      return res.status(400).json({ message: "You have already requested this item already." });
+    }
+
     const blockedRequest = await RequestModel.findOne({
       donationId,
       status: { $in: ["Approved", "Scheduled", "Completed"] }
@@ -58,10 +64,18 @@ export const getRequestsForMyDonations = async (req, res) => {
   try {
     const donationIds = await DonationModel.distinct("_id", { donorId: req.user._id });
 
-    const requests = await RequestModel.find({ donationId: { $in: donationIds } })
-      .populate("donationId", "title donorId")
+    const allRequests = await RequestModel.find({ donationId: { $in: donationIds } })
+      .populate("donationId", "title images donorId")
       .populate("receiverId", "name")
       .sort({ createdAt: -1 });
+
+    const requests = [];
+
+    for (let reqItem of allRequests) {
+      if (reqItem.status !== "Rejected") { // only include if not rejected
+        requests.push(reqItem);
+      }
+    }
 
     res.status(200).json({ message: "Requests for your donations fetched successfully", requests });
   } catch (error) {
@@ -75,8 +89,15 @@ export const getRequestsForMyDonations = async (req, res) => {
 export const getRequestsByUser = async (req, res) => {
   try {
     const requests = await RequestModel.find({ receiverId: req.user._id })
-      .populate("donationId", "title donorId")
       .populate("receiverId", "name")
+      .populate({
+        path: "donationId",
+        select: "title images donorId",
+        populate: {
+          path: "donorId",
+          select: "name address city province postal_code phone"
+        }
+      })
       .sort({ createdAt: -1 });
 
     res.status(200).json({ message: "Your requests fetched successfully", requests });
@@ -211,12 +232,6 @@ export const deleteRequestById = async (req, res) => {
     const request = await RequestModel.findById(req.params.id);
 
     if (!request) return res.status(404).json({ message: "Request not found." });
-
-    // Only receiver can delete the request
-    const isReceiver = request.receiverId.toString() === req.user._id.toString();
-    if (!isReceiver) {
-      return res.status(403).json({ message: "Access denied!" });
-    }
 
     await RequestModel.findByIdAndDelete(req.params.id);
 
