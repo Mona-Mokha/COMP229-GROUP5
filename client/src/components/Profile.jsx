@@ -1,7 +1,7 @@
- 
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
- 
+
 export default function MyProfile({ user, setUser, handleLogout }) {
   const [getUser, setAUser] = useState({
     name: "",
@@ -12,28 +12,28 @@ export default function MyProfile({ user, setUser, handleLogout }) {
     province: "",
     postal_code: ""
   });
- 
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
- 
+
   const handleChange = (e) => {
-    setUser(prevState => ({ ...prevState, [e.target.name]: e.target.value }));
+    setAUser(prevState => ({ ...prevState, [e.target.name]: e.target.value }));
     setError("");
     setSuccess("");
   };
- 
+
   // Fetch user profile on load
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem('token')
- 
+
       if (!token) {
         navigate('/login');
         return;
       }
- 
+
       try {
         const response = await fetch(`/api/user/me`, {
           headers: {
@@ -41,11 +41,11 @@ export default function MyProfile({ user, setUser, handleLogout }) {
             'Authorization': `Bearer ${token}`
           }
         });
- 
+
         if (!response.ok) {
           throw new Error('Failed to fetch user details');
         }
- 
+
         const data = await response.json();
         setAUser({
           name: data.name || "",
@@ -56,23 +56,23 @@ export default function MyProfile({ user, setUser, handleLogout }) {
           province: data.province || "",
           postal_code: data.postal_code || ""
         });
- 
+
       } catch (error) {
         console.error('Error fetching user', error);
       }
     }
     fetchUser();
   }, []);
- 
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
- 
+
     if (!token) {
       navigate('/login');
       return;
     }
- 
+
     try {
       const response = await fetch(`/api/user/me`, {
         method: 'PUT',
@@ -82,20 +82,20 @@ export default function MyProfile({ user, setUser, handleLogout }) {
         },
         body: JSON.stringify(getUser),
       });
- 
+
       if (response.ok) {
         setSuccess("Profile updated successfully!");
         setIsEditing(false);
       } else {
         setError("Failed to update profile. Please try again.");
       }
- 
+
     } catch (err) {
       console.error(err);
       console.log("Error connecting to server.");
     }
   };
- 
+
   const [pError, setPError] = useState("");
   const [pSuccess, setPSuccess] = useState("");
   const [passwordMode, setPasswordMode] = useState(false);
@@ -104,7 +104,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
     newPassword: "",
     confirmNew: ""
   });
- 
+
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmNew) {
@@ -112,13 +112,13 @@ export default function MyProfile({ user, setUser, handleLogout }) {
       setPSuccess("");
       return;
     }
- 
+
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
- 
+
     try {
       const response = await fetch(`/api/user/update-password`, {
         method: 'PUT',
@@ -131,9 +131,9 @@ export default function MyProfile({ user, setUser, handleLogout }) {
           newPassword: passwords.newPassword
         }),
       });
- 
+
       const data = await response.json();
- 
+
       if (response.ok) {
         setPSuccess("Password updated successfully!");
         setPError("");
@@ -147,7 +147,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
       console.log("Error connecting to server.");
     }
   }
- 
+
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
       return;
@@ -164,7 +164,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
           'Authorization': `Bearer ${token}`
         }
       });
- 
+
       if (response.ok) {
         alert("Account deleted successfully.");
         handleLogout();
@@ -178,19 +178,19 @@ export default function MyProfile({ user, setUser, handleLogout }) {
       console.log("Error connecting to server.");
     }
   };
- 
+
   return (
     <div className="ws-donations-page">
       <div className="ws-page-header">
         <h1>My Profile</h1>
         <p>Manage your account and personal information.</p>
       </div>
- 
+
       {/* PROFILE INFO */}
       <div className="ws-feature-card" style={{ maxWidth: "650px", margin: "0 auto", textAlign: "left" }}>
         {error && <p className="ws-auth-error">{error}</p>}
         {success && <p className="ws-auth-success">{success}</p>}
- 
+
         <form onSubmit={handleUpdate} className="ws-form">
           <div className="ws-form-row">
             <label>Full Name</label>
@@ -201,12 +201,12 @@ export default function MyProfile({ user, setUser, handleLogout }) {
               disabled={!isEditing}
             />
           </div>
- 
+
           <div className="ws-form-row">
             <label>Email</label>
             <input name="email" value={getUser.email} disabled />
           </div>
- 
+
           <div className="ws-form-row-inline">
             <div className="ws-form-row">
               <label>Phone</label>
@@ -217,7 +217,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 disabled={!isEditing}
               />
             </div>
- 
+
             <div className="ws-form-row">
               <label>Address</label>
               <input
@@ -227,7 +227,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 disabled={!isEditing}
               />
             </div>
- 
+
             <div className="ws-form-row">
               <label>City</label>
               <input
@@ -237,7 +237,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 disabled={!isEditing}
               />
             </div>
- 
+
             <div className="ws-form-row">
               <label>Province</label>
               <select
@@ -262,7 +262,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 <option value="YT">Yukon</option>
               </select>
             </div>
- 
+
             <div className="ws-form-row">
               <label>Postal Code</label>
               <input
@@ -273,7 +273,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
               />
             </div>
           </div>
- 
+
           <div style={{ display: "flex", gap: "10px", marginTop: "22px" }}>
             {isEditing ? (
               <>
@@ -293,7 +293,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
           </div>
         </form>
       </div>
- 
+
       {/* UPDATE PASSWORD */}
       <h2 style={{ textAlign: "center", marginTop: "40px" }}>Security</h2>
       <div className="ws-feature-card" style={{ maxWidth: "650px", margin: "20px auto", textAlign: "left" }}>
@@ -305,7 +305,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
           <form onSubmit={handlePasswordUpdate} className="ws-form">
             {pError && <p className="ws-auth-error">{pError}</p>}
             {pSuccess && <p className="ws-auth-success">{pSuccess}</p>}
- 
+
             <div className="ws-form-row">
               <label>Current Password</label>
               <input
@@ -315,7 +315,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 required
               />
             </div>
- 
+
             <div className="ws-form-row">
               <label>New Password</label>
               <input
@@ -325,7 +325,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 required
               />
             </div>
- 
+
             <div className="ws-form-row">
               <label>Confirm New Password</label>
               <input
@@ -335,7 +335,7 @@ export default function MyProfile({ user, setUser, handleLogout }) {
                 required
               />
             </div>
- 
+
             <div style={{ display: "flex", gap: "10px", marginTop: "22px" }}>
               <button type="submit" className="ws-primary-btn">Save Password</button>
               <button
@@ -352,5 +352,3 @@ export default function MyProfile({ user, setUser, handleLogout }) {
     </div>
   );
 }
- 
- 

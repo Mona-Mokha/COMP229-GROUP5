@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
- 
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
- 
+
   // Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       const token = localStorage.getItem("token");
       if (!token) return navigate("/login");
- 
+
       try {
         const res = await fetch("/api/notification", {
           headers: { Authorization: `Bearer ${token}` },
@@ -23,15 +23,15 @@ export default function NotificationsPage() {
         alert(err.message);
       }
     };
- 
+
     fetchNotifications();
   }, [navigate]);
- 
+
   // Mark as read
   const handleMarkRead = async (id) => {
     const token = localStorage.getItem("token");
     if (!token) return navigate("/login");
- 
+
     try {
       const res = await fetch(`/api/notification/read/${id}`, {
         method: "PUT",
@@ -39,7 +39,7 @@ export default function NotificationsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to mark as read");
- 
+
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
@@ -48,14 +48,14 @@ export default function NotificationsPage() {
       alert(err.message);
     }
   };
- 
+
   // Delete notification
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this notification?")) return;
- 
+
     const token = localStorage.getItem("token");
     if (!token) return navigate("/login");
- 
+
     try {
       const res = await fetch(`/api/notification/${id}`, {
         method: "DELETE",
@@ -63,21 +63,21 @@ export default function NotificationsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to delete notification");
- 
+
       setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
       console.error(err);
       alert(err.message);
     }
   };
- 
+
   return (
     <div className="ws-donations-page">
       <header className="ws-page-header">
         <h1>Notifications</h1>
         <p>Check your latest notifications here.</p>
       </header>
- 
+
       <div className="ws-requests-grid">
         {notifications.length === 0 ? (
           <p>You have no notifications.</p>
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
                 <p><strong>Type:</strong> {n.type}</p>
                 <p>{n.message}</p>
                 <p className="ws-request-date">{new Date(n.created).toLocaleString()}</p>
- 
+
                 <div className="ws-donor-action-buttons">
                   {!n.read && (
                     <button

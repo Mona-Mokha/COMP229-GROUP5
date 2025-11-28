@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
- 
+
 export default function Signup({ setUser }) {
     const navigate = useNavigate();
     const [error, setError] = useState('');
@@ -8,14 +8,14 @@ export default function Signup({ setUser }) {
         name: '', email: '', password: '', phone: '',
         address: '', city: '', province: '', postal_code: ''
     });
- 
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         if (error) {
             setError('');
         }
     };
- 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -26,14 +26,14 @@ export default function Signup({ setUser }) {
                 },
                 body: JSON.stringify(formData),
             });
- 
+
             const data = await response.json();
- 
+
             if (!response.ok) {
                 setError(data.message || "Registration failed");
                 return;
             }
- 
+
             localStorage.setItem('token', data.token);
             localStorage.setItem('name', data.user.name);
             localStorage.setItem('role', data.user.role);
@@ -45,24 +45,24 @@ export default function Signup({ setUser }) {
             console.error(err);
         }
         };
- 
+
         return (
             <div className="ws-auth-page">
- 
- 
+
+
                 <div className="ws-auth-card">
                     <div className="ws-auth-hero">
                         <h1>Create Your Account</h1>
                         <p>Join the community — donate items or request what you need.</p>
                     </div>
- 
+
                     {error && <p className="ws-auth-error">{error}</p>}
                     <form onSubmit={handleSubmit}>
                         <div className="ws-form-row">
                             <label>Full Name</label>
                             <input name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} required />
                         </div>
- 
+
                         <div className="ws-grid-2">
                             <div className="ws-form-row">
                                 <label>Email</label>
@@ -73,23 +73,23 @@ export default function Signup({ setUser }) {
                                 <input type="password" name="password" placeholder="Min. 6 characters" value={formData.password} onChange={handleChange} required />
                             </div>
                         </div>
- 
+
                         <div className="ws-form-row">
                             <label>Phone Number</label>
                             <input name="phone" placeholder="(123) 456-7890" value={formData.phone} onChange={handleChange} />
                         </div>
- 
+
                         <div className="ws-form-row">
                             <label>Street Address</label>
                             <input name="address" placeholder="123 Main St" value={formData.address} onChange={handleChange} />
                         </div>
- 
+
                         <div className="ws-grid-2">
                             <div className="ws-form-row">
                                 <label>City</label>
                                 <input name="city" placeholder="Toronto" value={formData.city} onChange={handleChange} />
                             </div>
- 
+
                             <div className="ws-form-row">
                                 <label>Province</label>
                                 <select
@@ -114,15 +114,15 @@ export default function Signup({ setUser }) {
                                 </select>
                             </div>
                         </div>
- 
+
                         <div className="ws-form-row">
                             <label>Postal Code</label>
                             <input name="postal_code" placeholder="M1A 1A1" value={formData.postal_code} onChange={handleChange} />
                         </div>
- 
+
                         <button type="submit" className="ws-auth-btn">Register</button>
                     </form>
- 
+
                     <p className="ws-auth-switch">
                         Already have an account? <Link to="/login">Login here</Link>
                     </p>
@@ -130,5 +130,3 @@ export default function Signup({ setUser }) {
             </div>
         );
     };
- 
- 
