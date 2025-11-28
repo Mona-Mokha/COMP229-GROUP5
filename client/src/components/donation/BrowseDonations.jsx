@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
- 
+
 export default function BrowseDonations() {
- 
+
   const [donations, setDonations] = useState([]);
   const navigate = useNavigate();
- 
+
   // Fetch all donations
   useEffect(() => {
     const fetchDonations = async () => {
@@ -15,22 +15,22 @@ export default function BrowseDonations() {
             'Content-Type': 'application/json'
           }
         });
- 
+
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.message)
         }
- 
+
         const list = data.donations || data.donation || [];
         setDonations(list);
- 
+
       } catch (error) {
         console.error(`Error fetching donations: ${error.message}`);
       }
     }
     fetchDonations();
   }, []);
- 
+
  
   return (
     <div className="ws-browse-page">
@@ -40,7 +40,7 @@ export default function BrowseDonations() {
           Discover items shared by our community.
         </p>
       </header>
- 
+
       <section className="ws-donations-grid">
         {donations.map((item) => (
           <article key={item.id} className="ws-donation-card">
@@ -70,4 +70,3 @@ export default function BrowseDonations() {
     </div>
   );
 }
- 

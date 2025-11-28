@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
- 
+
 export default function DonorRequests() {
   const [requests, setRequests] = useState([]);
   const [activeRequest, setActiveRequest] = useState(null); // current request picking slots
   const [selectedSlots, setSelectedSlots] = useState({});
   const navigate = useNavigate();
- 
+
   const timeSlots = [
     "09:00 AM - 11:00 AM",
     "11:00 AM - 1:00 PM",
@@ -14,40 +14,40 @@ export default function DonorRequests() {
     "03:00 PM - 5:00 PM",
     "05:00 PM - 7:00 PM",
   ];
- 
+
   const handleSlotChange = (reqId, index, field, value) => {
     const slots = selectedSlots[reqId] || [];
     const updatedSlots = [...slots];
     updatedSlots[index] = { ...updatedSlots[index], [field]: value };
     setSelectedSlots({ ...selectedSlots, [reqId]: updatedSlots });
   };
- 
+
   const addSlot = (reqId) => {
     const slots = selectedSlots[reqId] || [];
     if (slots.length < 3) {
       setSelectedSlots({ ...selectedSlots, [reqId]: [...slots, { date: "", timeSlot: "" }] });
     }
   };
- 
+
   const removeSlot = (reqId, index) => {
     const slots = selectedSlots[reqId] || [];
     const updatedSlots = slots.filter((_, i) => i !== index);
     setSelectedSlots({ ...selectedSlots, [reqId]: updatedSlots });
   };
- 
+
   const handleApprove = async (reqId) => {
     const slots = selectedSlots[reqId];
     if (!slots || slots.some(s => !s.date || !s.timeSlot)) {
       alert("Please select date and time for all slots.");
       return;
     }
- 
+
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
- 
+
     try {
       const res = await fetch(`/api/request/${reqId}`, {
         method: "PUT",
@@ -59,7 +59,7 @@ export default function DonorRequests() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to approve");
- 
+
       setRequests(prev =>
         prev.map(req =>
           req._id === reqId ? { ...req, status: "Approved", slots } : req
@@ -71,14 +71,14 @@ export default function DonorRequests() {
       alert("Error approving request.");
     }
   };
- 
+
   const handleReject = async (reqId) => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
- 
+
     try {
       const res = await fetch(`/api/request/${reqId}`, {
         method: "PUT",
@@ -90,21 +90,21 @@ export default function DonorRequests() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to reject");
- 
+
       setRequests(prev => prev.filter(req => req._id !== reqId));
     } catch (err) {
       console.error(err);
       alert("Error rejecting request.");
     }
   };
- 
+
   const handleComplete = async (reqId) => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
- 
+
     try {
       const res = await fetch(`/api/request/${reqId}`, {
         method: "PUT",
@@ -116,26 +116,26 @@ export default function DonorRequests() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to complete");
- 
+
       setRequests(prev =>
         prev.map(req =>
           req._id === reqId ? { ...req, status: "Completed" } : req
         )
       );
- 
+
     } catch (err) {
       console.error(err);
       alert("Error completing request.");
     }
   };
- 
+
   const handleDelete = async (reqId, donationId) => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
- 
+
     try {
       const res = await fetch(`/api/request/${reqId}`, {
         method: "DELETE",
@@ -147,31 +147,31 @@ export default function DonorRequests() {
       if (!res.ok) {
         throw new Error(data.message || "Failed to delete request");
       }
- 
+
       const res2 = await fetch(`/api/donation/${donationId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
- 
+
     const data2 = await res2.json();
     if (!res2.ok) throw new Error(data2.message || "Failed to delete donation");
- 
+
     setRequests(prev => prev.filter(r => r._id !== reqId));
- 
+
     alert("Request and donation deleted successfully.");
- 
+
     } catch (err) {
       console.error(err);
       alert(err.message || "Error deleting request.");
     }
   };
- 
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) navigate("/login");
- 
+
     const fetchRequests = async () => {
       try {
         const res = await fetch("/api/request/my-donations", {
@@ -187,23 +187,24 @@ export default function DonorRequests() {
     };
     fetchRequests();
   }, [navigate]);
- 
- 
+
+
   return (
     <div className="ws-donor-requests-page">
       <header className="ws-page-header">
         <h1>Donation Requests</h1>
         <p>Manage requests for your donations, approve or reject, and schedule pickup.</p>
       </header>
- 
+
       <div className="ws-donor-requests-grid">
         {requests.length === 0 && <p>No requests yet.</p>}
- 
+
         {requests.map(req => {
+          
           const donation = req.donationId;
           const receiver = req.receiverId;
           const slotsForReq = selectedSlots[req._id] || [];
- 
+
           return (
             <div key={req._id} className="ws-donor-request-card">
               <div className="ws-donor-request-left">
@@ -213,14 +214,14 @@ export default function DonorRequests() {
                   className="ws-donor-request-image"
                 />
               </div>
- 
+
               <div className="ws-donor-request-right">
                 <h2>{donation.title}</h2>
                 <p className="ws-request-receiver">Requested by: {receiver.name}</p>
                 <p>
                   Status: <span className={`ws-status ${req.status.toLowerCase()}`}>{req.status}</span>
                 </p>
- 
+
                 <div className="ws-donor-action-buttons">
                   {activeRequest !== req._id && (
                   <>
@@ -247,12 +248,12 @@ export default function DonorRequests() {
                     </button>
                   )}
                 </div>
- 
+
                 {/* Slot selection for active request */}
                 {activeRequest === req._id && req.status !== "Approved" && (
                   <div className="ws-schedule-box">
                     <h4>Select up to 3 slots:</h4>
- 
+
                     {slotsForReq.map((slot, idx) => (
                       <div key={idx} className="ws-slot-row">
                         <input
@@ -276,13 +277,13 @@ export default function DonorRequests() {
                         </button>
                       </div>
                     ))}
- 
+
                     {slotsForReq.length < 3 && (
                       <button className="ws-btn ws-btn-approve" onClick={() => addSlot(req._id)}>
                         Add Slot
                       </button>
                     )}
- 
+
                     <div className="ws-donor-action-buttons" style={{ marginTop: "10px" }}>
                       <button
                         className="ws-btn ws-btn-confirm"
@@ -297,7 +298,7 @@ export default function DonorRequests() {
                     </div>
                   </div>
                 )}
- 
+
                 {/* Display receiver-selected slot */}
                 {req.status === "Scheduled" && req.selectedSlot && (
                   <div className="ws-scheduled-slot">
@@ -313,4 +314,3 @@ export default function DonorRequests() {
     </div>
   );
 }
- 

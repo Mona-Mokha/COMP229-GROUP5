@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
- 
+
 export default function SingleDonation() {
   const [donation, setDonation] = useState({
     title: "",
@@ -12,12 +12,12 @@ export default function SingleDonation() {
     description: "",
     images: [],
   });
- 
+
   const [currentImage, setCurrentImage] = useState(0);
   const { id } = useParams();
   const navigate = useNavigate();
   const [error, setError] = useState("");
- 
+
   // Fetch donation details
   useEffect(() => {
     if (id) {
@@ -28,15 +28,15 @@ export default function SingleDonation() {
               'Content-Type': 'application/json'
             }
           });
- 
+
           const data = await response.json();
- 
+
           if (!response.ok) {
             throw new Error('Failed to fetch donation details');
           }
- 
+
           const donationData = data.donation;
- 
+
           setDonation({
             title: donationData.title,
             size: donationData.size,
@@ -47,7 +47,7 @@ export default function SingleDonation() {
             description: donationData.description,
             images: donationData.images || [],
           });
- 
+
         } catch (error) {
           console.error('Error fetching donation', error);
         }
@@ -55,14 +55,14 @@ export default function SingleDonation() {
       fetchDonation();
     }
   }, [id, navigate]);
- 
+
   const handleRequest = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
- 
+
     try {
       const res = await fetch("/api/request", {
         method: "POST",
@@ -72,28 +72,28 @@ export default function SingleDonation() {
         },
         body: JSON.stringify({ donationId: id })
       });
- 
+
       const data = await res.json();
- 
+
       if (!res.ok) {
         throw new Error(data.message || "Failed to create request");
       }
- 
+
       alert("Request submitted successfully!");
- 
+
     } catch (err) {
       console.error(err);
       setError(err.message);
     }
   };
- 
+
   return (
     <div className="ws-donation-detail-page">
       <header className="ws-page-header">
         <h1>{donation.title}</h1>
         <p>{donation.category}</p>
       </header>
- 
+
       <div className="ws-donation-detail-container">
         <div className="ws-donation-images">
           <img
@@ -113,23 +113,23 @@ export default function SingleDonation() {
             ))}
           </div>
         </div>
- 
+
         <div className="ws-donation-info">
           <h3>Details</h3>
           <p>{donation.description}</p>
- 
+
           <h4>Size & Condition</h4>
           <p>Size: {donation.size}</p>
           <p>Condition: {donation.condition}</p>
- 
+
           <h4>Location</h4>
           <p>{donation.city}, {donation.province}</p>
- 
+
           <button type="button" className="ws-primary-btn" onClick={handleRequest} >Request This Item</button>
           {error && <p className="ws-auth-error">{error}</p>}
         </div>
       </div>
- 
+
       {/* MAP BELOW */}
       <div className="ws-donation-map">
         <iframe
