@@ -271,7 +271,7 @@ body,
 .ws-hero-full {
   position: relative;
   min-height: 70vh;
-  background-image: src url("images.unsplash.com/photo-1582719478250-cc73c59b3c18?auto=format&fit=crop&w=1400&am…");
+  background-image: url("../src/assets/cover.jpg");
   background-size: cover;
   background-position: center;
   border-radius: 16px;
