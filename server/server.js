@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import multer from "multer";
 import path from "path";
+import { fileURLToPath } from 'url';
 import { storage } from "./cloudinary.js";
 
 import userRoutes from "./routes/user.routes.js";
@@ -14,6 +15,9 @@ import notificationRoutes from "./routes/notification.routes.js";
 //The client does NOT access .env directly
 //Instead, the server loads .env and uses the variables internally
 dotenv.config({ path: path.resolve('../server/.env') });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 //connect to mongo db
 mongoose.connect(process.env.MONGO_URI);
@@ -30,12 +34,19 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to application." });
 });
 
+app.use(morgan('dev'));
+
 app.use("/api/user", userRoutes);
 app.use("/api/donation", donationRoutes);
 app.use("/api/request", requestRoutes);
 app.use("/api/notification", notificationRoutes);
 
-app.use(morgan('dev'));
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
+})
+
 
 app.post("/upload", upload.single("file"), (req, res) => {
   // req.file.path is the Cloudinary URL
