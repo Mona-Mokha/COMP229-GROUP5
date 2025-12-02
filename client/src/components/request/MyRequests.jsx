@@ -164,7 +164,7 @@ export default function MyRequests() {
                               className={`ws-slot-row ${isSelected ? "ws-slot-selected" : ""}`}
                               onClick={() => setSelectedSlot({ ...selectedSlot, [req._id]: slot })}
                             >
-                              {slot.date} - {slot.timeSlot}
+                              {slot.date.split("T")[0]} - {slot.timeSlot}
                             </div>
                           );
                         })}
