@@ -271,7 +271,7 @@ body,
 .ws-hero-full {
   position: relative;
   min-height: 70vh;
-  background-image: url("../src/assets/cover.jpg");
+  background-image: url("/cover.jpg");
   background-size: cover;
   background-position: center;
   border-radius: 16px;

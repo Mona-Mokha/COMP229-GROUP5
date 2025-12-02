@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import DonationModel from "../models/donation.model.js";
 
+import { v2 as cloudinary } from "cloudinary";
+import { getPublicId } from "../cloudinary.js";
+
 
 // PUBLIC: Only approved donations
 export const getAllDonationsPublic = async (req, res) => {
@@ -99,10 +102,20 @@ export const createDonation = async (req, res) => {
     if (!req.user || !req.user._id) {
       return res.status(401).json({ message: "You must login or register to create a donation." });
     }
+    // New uploaded images from Multer + Cloudinary
+    const newImages = req.files ? req.files.map(file => file.path) : [];
+    const existingImages = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
 
-    const { title, description, category, size, condition, preference } = req.body;
+    const images = [...existingImages, ...newImages];
 
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const {
+      title,
+      description,
+      category,
+      size,
+      condition,
+      preference
+    } = req.body;
 
     const donation = await DonationModel.create({
       donorId: req.user._id,
@@ -247,9 +260,28 @@ export const updateDonationById = async (req, res) => {
     // Donor can update only their own fields
     if (isDonor) {
 
-      const existingImages = JSON.parse(req.body.existingImages || "[]");
-      const newImages = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+      const existingImages = req.body.existingImages
+        ? JSON.parse(req.body.existingImages)
+        : [];
+
+      const newImages = req.files && req.files.length > 0
+        ? req.files.map(f => f.path)
+        : [];
+
       const finalImages = [...existingImages, ...newImages];
+
+      // Find removed images
+      const removedImages = donation.images.filter(img => !existingImages.includes(img));
+
+      // DELETE FROM CLOUDINARY
+      for (const img of removedImages) {
+        try {
+          const publicId = getPublicId(img);
+          await cloudinary.uploader.destroy(publicId);
+        } catch (err) {
+          console.error("Cloudinary delete failed:", err);
+        }
+      }
 
       const donorFields = ['title', 'description', 'images', 'category', 'size', 'condition', 'preference'];
       donorFields.forEach(field => {
@@ -257,7 +289,7 @@ export const updateDonationById = async (req, res) => {
           updates[field] = req.body[field];
         }
       });
-      updates.images = finalImages; 
+      updates.images = finalImages;
     }
 
     if (isAdmin) { // Admin can only update status and reviewedBy
@@ -290,21 +322,17 @@ export const deleteDonationById = async (req, res) => {
       return res.status(403).json({ message: "Access denied!" });
     }
 
-    // delete images from /uploads folder
-    donation.images.forEach(img => {
-      if (donation.images && donation.images.length > 0) {
-        const fileName = img.replace("/uploads/", "").replace("uploads/", "");
-        const filePath = path.join(process.cwd(), "uploads", fileName);
+    // delete images from folder
+    for (const img of donation.images) {
+      const publicId = getPublicId(img);
+      if (!publicId) continue;
 
-        fs.unlink(filePath, err => {
-          if (err) {
-            console.error("Error deleting image:", err);
-          } else {
-            console.log("Deleted image:", filePath);
-          }
-        });
+      try {
+        const result = await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+      } catch (err) {
+        console.error("Cloudinary delete error:", err);
       }
-    });
+    }
 
     await DonationModel.findByIdAndDelete(donationId);
 
