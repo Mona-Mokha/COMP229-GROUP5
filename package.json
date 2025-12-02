@@ -4,9 +4,16 @@
   "description": "",
   "type": "module",
   "main": "server.js",
+  "private": "true",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "npm-run-all --parallel start:client start:server",
+    "start:server": "npm --prefix server run dev",
+    "start:client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build"
   },
   "keywords": [],
   "author": "Group5ive",
