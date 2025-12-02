@@ -30,9 +30,9 @@ app.use(express.json());
 
 const upload = multer({ storage });
 
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to application." });
-});
+// app.get("/", (req, res) => {
+//   res.json({ message: "Welcome to application." });
+// });
 
 app.use(morgan('dev'));
 
