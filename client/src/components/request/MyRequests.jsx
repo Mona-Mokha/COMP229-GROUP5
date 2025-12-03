@@ -156,7 +156,7 @@ export default function MyRequests() {
                       <div className="ws-slots-container">
                         {slots.map((slot, idx) => {
                           const isSelected =
-                            selectedSlot[req._id]?.date.split("T")[0] === slot.date &&
+                            selectedSlot[req._id]?.date.split("T")[0] === slot.date.split("T")[0]  &&
                             selectedSlot[req._id]?.timeSlot === slot.timeSlot;
                           return (
                             <div
