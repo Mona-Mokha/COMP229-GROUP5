@@ -49,39 +49,38 @@ describe('Signup', () => {
         expect(addressInput.value).toBe('123 Main St');
         expect(cityInput.value).toBe('Toronto');
     });
- 
-    test('submits the form and stores user info', async () => {
-        const setUser = jest.fn();
- 
-        global.fetch.mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({
-                token: 'token-123',
-                user: { name: 'John Doe', role: 'user' },
-            }),
-        });
- 
-        render(<Signup setUser={setUser} />);
- 
-        fireEvent.change(screen.getByPlaceholderText(/John Doe/i), { target: { value: 'John Doe' } });
-        fireEvent.change(screen.getByPlaceholderText(/name@example.com/i), { target: { value: 'john@test.com' } });
-        fireEvent.change(screen.getByPlaceholderText(/Min. 6 characters/i), { target: { value: '123456' } });
-        fireEvent.change(screen.getByPlaceholderText(/\(123\) 456-7890/i), { target: { value: '(123) 456-7890' } });
-        fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), { target: { value: '123 Main St' } });
-        fireEvent.change(screen.getByPlaceholderText(/Toronto/i), { target: { value: 'Toronto' } });
- 
-        fireEvent.click(screen.getByRole('button', { name: /register/i }));
- 
-        await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith('/api/user/register', expect.objectContaining({
-                method: 'POST',
-            }));
-        });
- 
-        expect(localStorage.setItem).toHaveBeenCalledWith('token', 'token-123');
-        expect(localStorage.setItem).toHaveBeenCalledWith('name', 'John Doe');
-        expect(localStorage.setItem).toHaveBeenCalledWith('role', 'user');
-        expect(setUser).toHaveBeenCalledWith({ name: 'John Doe' });
-        expect(mockNavigate).toHaveBeenCalledWith('/');
-    });
+});
+
+test('submits the form and stores user info', async () => {
+  const setUser = jest.fn();
+
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({
+      token: 'token-123',
+      user: { name: 'John Doe', role: 'user' },
+    }),
+  });
+
+  render(<Signup setUser={setUser} />);
+
+  // Fill inputs
+  fireEvent.change(screen.getByPlaceholderText(/John Doe/i), { target: { value: 'John Doe' } });
+  fireEvent.change(screen.getByPlaceholderText(/name@example.com/i), { target: { value: 'john@test.com' } });
+  fireEvent.change(screen.getByPlaceholderText(/Min. 6 characters/i), { target: { value: '123456' } });
+
+  // Submit and await fetch
+  fireEvent.click(screen.getByRole('button', { name: /register/i }));
+
+  await waitFor(() => {
+    expect(global.fetch).toHaveBeenCalledWith('/api/user/register', expect.objectContaining({
+      method: 'POST',
+    }));
+  });
+
+  expect(localStorage.setItem).toHaveBeenCalledWith('token', 'token-123');
+  expect(localStorage.setItem).toHaveBeenCalledWith('name', 'John Doe');
+  expect(localStorage.setItem).toHaveBeenCalledWith('role', 'user');
+  expect(setUser).toHaveBeenCalledWith({ name: 'John Doe' });
+  expect(mockNavigate).toHaveBeenCalledWith('/');
 });

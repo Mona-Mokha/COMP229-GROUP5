@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
-// We'll create a tiny stub component that shows a Delete button and calls the API.
 const mockNavigate = jest.fn();
 
 function DeleteButton({ id }) {
@@ -10,7 +9,6 @@ function DeleteButton({ id }) {
     if (!token) return;
     const res = await fetch(`/api/donation/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
-      // call mockNavigate instead of touching window.location (jsdom doesn't implement navigation)
       mockNavigate('/donations/my-donations');
     }
   };
