@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Signup from '../components/Signup'; // make sure the path & capitalization are correct
+import Login from '../components/Login';
 import { createMockLocalStorage } from './test-helpers';
 
 const mockNavigate = jest.fn();
@@ -7,77 +7,78 @@ const mockNavigate = jest.fn();
 // Mock react-router-dom
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  Link: ({ children, to }) => <a href={to}>{children}</a>,
+  Link: ({ children, to }) => <a href={to}>{children}</a>, // simple Link mock
 }));
 
 // Mock localStorage
-const localStorageMock = (() => {
-  let store = {};
-  return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => { store[key] = value; }),
-    clear: jest.fn(() => { store = {}; }),
-    removeItem: jest.fn((key) => { delete store[key]; }),
-  };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+// const localStorageMock = (() => {
+//   let store = {};
+//   return {
+//     getItem: jest.fn((key) => store[key] || null),
+//     setItem: jest.fn((key, value) => {
+//       store[key] = value;
+//     }),
+//     clear: jest.fn(() => { store = {}; }),
+//     removeItem: jest.fn((key) => { delete store[key]; }),
+//   };
+// })();
+// Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-describe('Signup', () => {
+describe('Login', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
     mockNavigate.mockClear();
-    localStorageMock.clear();
+    Object.defineProperty(window, 'localStorage', {
+      value: createMockLocalStorage(),
+      writable: true
+    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  test('lets the user fill in the form fields', () => {
-    render(<Signup />);
+  test('updates the inputs as the user types', () => {
+    render(<Login />);
 
-    const nameInput = screen.getByPlaceholderText(/John Doe/i);
-    const emailInput = screen.getByPlaceholderText(/name@example.com/i);
-    const passwordInput = screen.getByPlaceholderText(/Min. 6 characters/i);
+    const emailInput = screen.getByPlaceholderText(/Enter your email/i);
+    const passwordInput = screen.getByPlaceholderText(/Enter your password/i);
 
-    fireEvent.change(nameInput, { target: { value: 'John Doe' } });
-    fireEvent.change(emailInput, { target: { value: 'john@test.com' } });
+    fireEvent.change(emailInput, { target: { value: 'student@test.com' } });
     fireEvent.change(passwordInput, { target: { value: '123456' } });
 
-    expect(nameInput.value).toBe('John Doe');
-    expect(emailInput.value).toBe('john@test.com');
+    expect(emailInput.value).toBe('student@test.com');
     expect(passwordInput.value).toBe('123456');
   });
 
-  test('submits the form and stores user info', async () => {
+  test('sends the credentials to the API and stores the token', async () => {
     const setUser = jest.fn();
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         token: 'token-123',
-        user: { name: 'John Doe', role: 'user' },
+        user: { name: 'st123', role: 'student' },
       }),
     });
 
-    render(<Signup setUser={setUser} />);
+    render(<Login setUser={setUser} />);
 
-    fireEvent.change(screen.getByPlaceholderText(/John Doe/i), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByPlaceholderText(/name@example.com/i), { target: { value: 'john@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/Min. 6 characters/i), { target: { value: '123456' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter your email/i), { target: { value: 'student@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter your password/i), { target: { value: '123456' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /register/i }));
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/user/register', expect.objectContaining({
+      expect(global.fetch).toHaveBeenCalledWith('/api/user/login', expect.objectContaining({
         method: 'POST',
       }));
     });
 
     expect(localStorage.setItem).toHaveBeenCalledWith('token', 'token-123');
-    expect(localStorage.setItem).toHaveBeenCalledWith('name', 'John Doe');
-    expect(localStorage.setItem).toHaveBeenCalledWith('role', 'user');
-    expect(setUser).toHaveBeenCalledWith({ name: 'John Doe' });
+    expect(localStorage.setItem).toHaveBeenCalledWith('name', 'st123');
+    expect(localStorage.setItem).toHaveBeenCalledWith('role', 'student');
+    expect(setUser).toHaveBeenCalledWith({ name: 'st123' });
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 });
