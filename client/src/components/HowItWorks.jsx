@@ -12,7 +12,8 @@ export default function HowItWorks() {
       <section className="hiw-hero">
         <div className="hiw-hero-content">
           <h1>How WearShare Works</h1>
-          <p>Giving your clothes a second life has never been easier.</p>
+          <p className="hero-main-text">Giving your clothes a second life has never been easier.</p>
+          <p className="hero-sub-text">Join a community that believes in smarter, sustainable wardrobe choices.</p>
           {token ? (
             <button className="hiw-cta-btn" onClick={() => navigate("/donations/submit")}>Start Donating</button>
           ) : (
