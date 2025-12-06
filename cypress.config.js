@@ -6,5 +6,8 @@ export default defineConfig({
       // implement node event listeners here
     },
     baseUrl: "http://localhost:5000",
+    video: true,
+    videosFolder: 'cypress/videos',
+    screenshotOnRunFailure: true
   },
 });
