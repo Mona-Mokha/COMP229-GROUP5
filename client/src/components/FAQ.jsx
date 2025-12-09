@@ -36,6 +36,11 @@ const faqs = [
     answer:
       "Items are not guaranteed or certified. We advise donors to post truthful pictures and recipients to inspect items when picking up.",
   },
+  {
+    question: "Can I donate clothes of any size or condition?",
+    answer:
+      "Yes! We accept clothing of all sizes and gently used condition. Please ensure items are clean and in wearable condition for the next user.",
+  },
 ];
 
 export default function FAQ() {
