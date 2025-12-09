@@ -27,6 +27,11 @@ const faqs = [
       "This depends on the donor. Some donors offer delivery, while others require pickup. Details are shown in the listing.",
   },
   {
+    question: "Is there a limit to how many items I can donate?",
+    answer:
+      "There is no strict limit. You’re welcome to donate as many quality items as you like, as long as they are clean, usable, and accurately described.",
+  },
+  {
     question: "Are items inspected or guaranteed?",
     answer:
       "Items are not guaranteed or certified. We advise donors to post truthful pictures and recipients to inspect items when picking up.",
