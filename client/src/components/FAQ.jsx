@@ -31,6 +31,11 @@ const faqs = [
     answer:
       "Items are not guaranteed or certified. We advise donors to post truthful pictures and recipients to inspect items when picking up.",
   },
+  {
+    question: "Is there a limit to how many items I can donate?",
+    answer:
+      "There is no strict limit. You’re welcome to donate as many quality items as you like, as long as they are clean, usable, and accurately described.",
+  },
 ];
 
 export default function FAQ() {
